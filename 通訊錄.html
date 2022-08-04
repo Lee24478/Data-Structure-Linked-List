@@ -1,0 +1,383 @@
+<!DOCTYPE html/>
+<html>
+	<head>
+		<meta charset = 'utf-8'/>
+		<title>通訊錄</title>
+		<div><b><font color = 'red' size = '5'>###我李健立自己思考解決、絕無抄襲###</font></b></div>
+		<br>
+		<style>
+			body{
+				text-align:center;
+				font-family:Courier;
+				background-color:black;
+				color:white;
+			}
+			#name,#findna,#edname,#nickname,#findnn,#ednickname{width:6em;}
+			#tele,#findte,#edtele{width:10em;}
+			table,tr,td,th{
+                margin-left:auto; 
+                margin-right:auto;
+                height: auto;
+				text-align:center;
+				table-layout: fixed;
+				font-size:20px;
+            }
+			p{display:inline;}
+		</style>
+	</head>
+	<body>
+		<label for = 'file'>載入 txt 檔：</label>
+		<input type='file' id='file'/>
+		<br><br>
+		<label for = 'name'>輸入姓名：</label>
+		<input type = 'text' id = 'name' />
+		<p id = 'n'></p>
+		<br><br>
+		<label for = 'nickname'>輸入暱稱：</label>
+		<input type = 'text' id = 'nickname' />
+		<p id = 'nn'></p>
+		<br><br>
+		<label for = 'tele'>輸入電話：</label>
+		<input type = 'number' id = 'tele'/> 
+		<p id = 'i'></p>
+		<br><br>
+		<label for = 'email'>輸入信箱：</label>
+		<input type = 'text' id = 'email'/> 
+		<p id = 'ema'></p>
+		<br><br>
+		<input type="button" value="加入通訊錄" style = 'background-color:blue;color:white;border:5px black double;' onclick = 'add()'/>
+		<input type="button" value="尋找" style = 'background-color:blue;color:white;border:5px black double;' onclick = 'find()'/>
+		<input type="button" value="清空通訊錄"  style = 'background-color:red;color:white;border:3px orange double;' onclick = 'del()'/>
+		<br><br>
+		<div id = 'f'></div>
+		<br>
+		<div id = 'e'></div>
+		<br>
+		<table id = 'table' border = '2' borderColor = 'blue' cellpadding = '2' cellspacing = '2'>
+			<thead>
+				<th colspan = '4'>通訊錄</th>
+			</thead>
+			<tr>
+				<th width = '130px'>姓名</th>
+				<th width = '130px'>暱稱</th>
+				<th width = '210px'>電話</th>
+				<th width = '300px'>信箱</th>
+			</tr>
+		</table>
+		<br>
+		<input type="button" value="存檔" style = 'color:black;border:5px black double;' onclick = 'save()'/>
+		<input type="button" value="離開" style = 'background-color:red;color:white;border:3px orange double;' onclick = 'exit()'/>
+		<script>
+			//INPUT TXT
+			var A = [];
+			document.getElementById('file').onchange = function(){
+				ptr = head;
+				var file = this.files[0];
+				var reader = new FileReader();
+				reader.readAsText(file);
+				reader.onload = function(progressEvent){
+					var Lines = this.result.split('\r\n'); 
+					for(let i = 1 ; i < Lines.length ; i++){
+						A[i] = Lines[i].split(';');
+						if (A[i][0].trim() == '' || A[i][2].trim() == ''){continue;}
+						for(let j = 0 ; j < 4 ; j++){ 
+							if (A[i][j] == undefined){
+								A[i][j] = '未輸入';
+							}
+							else if (A[i][j].trim() == ''){
+								A[i][j] = '未輸入';
+							}
+						}
+						ptr = Find(A[i][0]);  //用姓名排
+						<!-- ptr = Find(A[i][1]); -->
+						ptr.next = new node(A[i][0].trim(),A[i][1].trim(),A[i][2].trim(),A[i][3].trim(),ptr.next);
+					}
+					Prt();
+				}
+			}	
+			//SAVE
+			function save(){
+				var str = '';
+				ptr = head;
+				while (ptr){
+					str += ptr.name+';'+ptr.nickname+';'+ptr.tele+';'+ptr.email+'\r\n';
+					ptr = ptr.next;
+				}
+				var Txt = new Blob([str], {type:'text/plain'});
+				var downloadLink = document.createElement("a");
+				downloadLink.download = '通訊錄名冊(新).txt';
+				downloadLink.href = window.URL.createObjectURL(Txt);
+				downloadLink.click();
+			}
+			//EXIT
+			function exit(){
+				if (window.confirm('離開前要儲存檔案嗎?')){
+					save();
+					alert('檔案已儲存！');
+					window.close();
+				}
+				else{
+					window.close();
+				}
+			}
+			//ADD TO THE ADDRESS BOOK
+			function add(){
+				var n = document.getElementById("name").value;
+				var nn = document.getElementById("nickname").value;
+				var i = document.getElementById("tele").value;
+				var ema = document.getElementById("email").value;
+				if (n.trim() == ''){
+					alert('請輸入姓名！');
+				}
+				else if (i.trim() == ''){
+					alert('請輸入電話！');
+					document.getElementById("tele").value = '';
+				}
+				else if (i != parseInt(i) || i < 0){
+					alert('請輸入正確的電話號碼！');
+					document.getElementById("tele").value = '';
+				}
+				else{
+					document.getElementById("n").innerHTML = n.trim();
+					document.getElementById("nn").innerHTML = nn.trim();
+					document.getElementById("i").innerHTML = i.trim();
+					document.getElementById("ema").innerHTML = ema.trim();
+					if (nn.trim() == ''){
+						nn = '未輸入';
+					}
+					if (ema.trim() == ''){
+						ema = '未輸入';
+					}
+					ptr = head;
+					while(ptr.next){
+						if(ptr.next.name == n && ptr.next.nickname == nn){ 
+							if(window.confirm('此用戶已在通訊錄裡，要取代掉嗎?')){
+								ptr.next.tele = i;
+								ptr.next.email = ema;
+								document.getElementById("name").value = '';
+								document.getElementById("nickname").value = '';
+								document.getElementById("tele").value = '';
+								document.getElementById("email").value = '';
+								Prt();
+								return;
+							}
+							else {
+								alert('請重新輸入姓名與暱稱');
+								document.getElementById("name").value = '';
+								document.getElementById("nickname").value = '';
+								return;
+							}
+						}
+						else if(ptr.next.tele == i){
+							alert('此電話號碼重複！');
+							document.getElementById("tele").value = '';
+							return;
+						}
+						ptr = ptr.next;
+					}
+					ptr = Find(n); //用姓名排
+					ptr.next = new node(n.trim(),nn.trim(),i.trim(),ema.trim(),ptr.next);
+					Prt();
+					document.getElementById("name").value = '';
+					document.getElementById("nickname").value = '';
+					document.getElementById("tele").value = '';
+					document.getElementById("email").value = '';
+				}
+			}
+			//DELETE ALL
+			function del(){
+				if(window.confirm('確定要清除通訊錄?(紀錄會全不見唷)')){
+					ptr = head;
+					ptr.next = null;
+					table.innerHTML = "<table id = 'table' border = '2' borderColor = 'blue' cellpadding = '2' cellspacing = '2'><thead><th colspan = '4' align='center' valign = 'center'>通訊錄</th></thead><tr><th width = '130px'>姓名</th><th width = '130px'>暱稱</th><th width = '210px'>電話</th><th width = '300px'>信箱</th></tr></table>";
+				}
+			}
+			//FIND FROM THE ADDRESS BOOK
+			function find(){  
+				var d = document.getElementById('f');
+				d.innerHTML = "用姓名找： <input type = 'text' id = 'findna'/> 用暱稱找： <input type = 'text' id = 'findnn'/> 用電話找： <input type = 'number' id = 'findte'/> <input type='button' value='修改資訊' id = 'btn_edit' style = 'background-color:blue;color:white;border:5px black double;' onclick = 'edit()'/> <input type='button' value='從通訊錄中刪除' id = 'btn_delet' style = 'background-color:blue;color:white;border:5px black double;' onclick = 'delet()'/>";
+			}
+			//EDIT
+			function edit(){
+				fna = document.getElementById('findna').value;
+				fnn = document.getElementById('findnn').value;
+				fte = document.getElementById('findte').value;
+				if (fna.trim() == '' && fte.trim() == '' && fnn.trim() == ''){
+					alert('請問要找誰?');
+				}
+				ptr = head;
+				while(ptr != null){
+					if (fna == ptr.name || fte == ptr.tele || fnn == ptr.nickname){
+						var e = document.getElementById('e');
+						e.innerHTML = "修改姓名： <input type = 'text' id = 'edname'/> 修改暱稱： <input type = 'text' id = 'ednickname'/> 修改電話： <input type = 'number' id = 'edtele'/> 修改信箱： <input type = 'text' id = 'edemail'/> <input type='button' value='確定修改' id = 'btn_conRE' style = 'background-color:blue;color:white;border:5px black double;' onclick = 'conRE()'/>";
+						document.getElementById('edname').value = ptr.name;
+						document.getElementById('ednickname').value = ptr.nickname;
+						document.getElementById('edtele').value = ptr.tele;
+						document.getElementById('edemail').value = ptr.email;
+						document.getElementById('findna').value = '';
+						document.getElementById('findnn').value = '';
+						document.getElementById('findte').value = '';
+						break;
+					}
+					ptr = ptr.next;
+				}
+				if (ptr == null && (fna.trim() != '' || fte.trim() != '' || fnn.trim() != '')){
+					alert('查無此用戶');
+					document.getElementById('findna').value = '';
+					document.getElementById('findnn').value = '';
+					document.getElementById('findte').value = '';
+				}
+				var table = document.getElementById('table');
+				for (let i = 2 ; i < table.rows.length ; i++){
+					table.rows[i].style.backgroundColor = 'black';
+				}
+				for (let i = 2 ; i < table.rows.length ; i++){
+					if (ptr != null && (ptr.name == table.rows[i].cells[0].innerHTML || ptr.nickname == table.rows[i].cells[1].innerHTML || ptr.tele == table.rows[i].cells[2].innerHTML)){
+						table.rows[i].style.backgroundColor = 'red';
+						break;
+					}
+				}
+			}
+			//CONFIRM THE REVISIONS
+			function conRE(){
+				edn = document.getElementById('edname').value;
+				ednn = document.getElementById('ednickname').value;
+				edt = document.getElementById('edtele').value;
+				edema = document.getElementById('edemail').value;
+				if (ednn.trim() == ''){ 
+					ednn = '未輸入';
+				}
+				if (edema.trim() == ''){ 
+					edema = '未輸入';
+				}
+				if (edn.trim() == ''){
+					alert('請輸入姓名！');
+				}
+				else if (edt.trim() == ''){ 
+					alert('請輸入電話！');
+				}
+				else if (edt != parseInt(edt) || edt < 0){
+					alert('請輸入正確的電話號碼！');
+					document.getElementById("edtele").value = '';
+				}
+				else{
+					ptr = head;
+					while(ptr.next){
+						if (ptr.next.name == fna || ptr.next.tele == fte || ptr.next.nickname == fnn){
+							ptr.next = ptr.next.next;
+							ptr = Find(edn); //用姓名排
+							ptr.next = new node(edn.trim(),ednn.trim(),edt.trim(),edema.trim(),ptr.next);
+							Prt();
+							document.getElementById("edname").value = '';
+							document.getElementById("ednickname").value = '';
+							document.getElementById("edtele").value = '';
+							document.getElementById("edemail").value = '';
+							fna = null;
+							fnn = null;
+							fte = null;
+							alert('修改成功！');
+							<!-- document.getElementById('findna').setAttribute('type','hidden'); -->
+							document.getElementById('f').innerHTML = '';
+							document.getElementById('e').innerHTML = '';
+							return;
+						}
+						ptr = ptr.next;
+					}
+				}
+			}
+			//DELETE FROM THE ADDRESS BOOK
+			function delet(){  
+				fna = document.getElementById('findna').value;
+				fnn = document.getElementById('findnn').value;
+				fte = document.getElementById('findte').value;
+				if (fna.trim() == '' && fnn.trim() == '' && fte.trim() == ''){
+					alert('請問要找誰?');
+				}
+				ptr = head;
+				while(ptr.next){
+					if(fna == ptr.next.name || fnn == ptr.next.nickname || fte == ptr.next.tele){
+						if (window.confirm('確定要從通訊錄中刪除?')){
+							ptr.next = ptr.next.next;
+							Prt();	
+							alert('刪除成功！');
+							document.getElementById('findna').value = '';
+							document.getElementById('findnn').value = '';
+							document.getElementById('findte').value = '';
+							document.getElementById('f').innerHTML = '';
+							document.getElementById('e').innerHTML = '';
+							break;
+						}
+						else{
+							document.getElementById('findna').value = '';
+							document.getElementById('findnn').value = '';
+							document.getElementById('findte').value = '';
+							break;
+						}
+					}
+					ptr = ptr.next;
+				}
+				if(ptr != null){
+					if (ptr.next == null && (fna.trim() != '' || fnn.trim() != '' || fte.trim() != '')){
+						alert('查無此用戶');
+						document.getElementById('findna').value = '';
+						document.getElementById('findnn').value = '';
+						document.getElementById('findte').value = '';
+					}
+				}
+			}
+			//NODE
+			var node = function(name , nickname , tele , email , ppp = null){
+				this.name = name;
+				this.nickname = nickname;
+				this.tele = tele;
+				this.email = email;
+				this.next = ppp;
+			}
+			//PRINT
+			var Prt = function(){
+				var table = document.getElementById('table');
+				table.innerHTML = "<table id = 'table' border = '2' borderColor = 'blue' cellpadding = '2' cellspacing = '2'><thead><th colspan = '4' align='center' valign = 'center'>通訊錄</th></thead><tr><th width = '130px'>姓名</th><th width = '130px'>暱稱</th><th width = '210px'>電話</th><th width = '300px'>信箱</th></tr></table>";
+				ptr = head;
+				var count = 0;
+				st = new Map();
+				while(ptr != null){
+					st.set(count,[ptr.name,ptr.nickname,ptr.tele,ptr.email]);
+					var row = table.insertRow(table.rows.length);
+					var c1 = row.insertCell(0);
+					var c2 = row.insertCell(1);
+					var c3 = row.insertCell(2);
+					var c4 = row.insertCell(3);
+					c1.innerHTML = st.get(count)[0];
+					c2.innerHTML = st.get(count)[1];
+					c3.innerHTML = st.get(count)[2];
+					c4.innerHTML = st.get(count)[3];
+					ptr = ptr.next;
+					count++;
+				}
+				table.deleteRow(2);
+				<!-- st.forEach((value,key) => { -->
+					<!-- var row = table.insertRow(table.rows.length); -->
+					<!-- var c1 = row.insertCell(0); -->
+					<!-- var c2 = row.insertCell(1); -->
+					<!-- c1.innerHTML = key; -->
+					<!-- c2.innerHTML = value; -->
+					<!-- }) -->
+			}
+			//ALPHABETICALLY
+			var Find = function(n){
+				ptr = head;
+				while(ptr.next){
+					if(ptr.next.name > n){break;}
+					ptr = ptr.next;
+				}
+					<!-- if(ptr.next.tele > n){break;} -->
+					<!-- ptr = ptr.next; -->
+				<!-- } -->
+				return ptr;
+			}
+			//DEFAULT
+			head = new node('default','default','default','default',null); 
+			<!-- document.body.style.backgroundColor = 'green'; -->
+		</script>
+	</body>
+</html>
